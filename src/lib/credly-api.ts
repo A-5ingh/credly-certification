@@ -6,13 +6,23 @@ const CREDLY_API_BASE = import.meta.env.DEV
 
 export async function fetchCredlyBadges(username: string): Promise<CredlyBadge[]> {
   const url = `${CREDLY_API_BASE}/${username}/badges.json`
+  let response;
 
-  if (import.meta.env.DEV) {
-    console.debug('[Credly API] fetching', url)
+  if(import.meta.env.PROD) {
+    // Wrap it in the AllOrigins proxy URL
+    const proxyUrl = `https://corsproxy.io?url=${encodeURIComponent(url)}`;
+    
+    const proxyResponse = await fetch(proxyUrl);
+    if (!proxyResponse.ok) {
+      throw new Error(`Proxy error: ${proxyResponse.status}`);
+    }
+    const proxyData = await proxyResponse.json();
+    response = JSON.parse(proxyData.contents);
   }
-
-  const response = await fetch(url)
-
+  else {
+    response = await fetch(url);
+  }
+  
   if (!response.ok) {
     if (import.meta.env.DEV) {
       const body = await response.text()
