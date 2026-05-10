@@ -1,33 +1,44 @@
 import type { CredlyBadge } from './types'
 
-const CREDLY_API_BASE = 'https://www.credly.com/users'
+const CREDLY_API_BASE = import.meta.env.DEV
+  ? '/api/credly/users'
+  : 'https://www.credly.com/users'
 
 export async function fetchCredlyBadges(username: string): Promise<CredlyBadge[]> {
   const url = `${CREDLY_API_BASE}/${username}/badges.json`
-  
+
+  if (import.meta.env.DEV) {
+    console.debug('[Credly API] fetching', url)
+  }
+
   const response = await fetch(url)
-  
+
   if (!response.ok) {
+    if (import.meta.env.DEV) {
+      const body = await response.text()
+      console.error('[Credly API] fetch failed', { url, status: response.status, statusText: response.statusText, body })
+    }
+
     if (response.status === 404) {
       throw new Error('Credly profile not found. Please check the username and ensure the profile is public.')
     }
     throw new Error('Failed to fetch badges from Credly. Please try again later.')
   }
-  
+
   const data = await response.json()
-  
+
   if (!data.data || data.data.length === 0) {
     return []
   }
-  
+
   return data.data.map((badge: any) => ({
     id: badge.id,
-    name: badge.name,
-    description: badge.description || '',
-    image_url: badge.image_url,
+    name: badge.badge_template?.name || 'Unknown Badge',
+    description: badge.badge_template?.description || '',
+    image_url: badge.badge_template?.image?.url || '',
     issuer: {
-      name: badge.issuer?.name || 'Unknown Issuer',
-      image_url: badge.issuer?.image_url,
+      name: badge.issuer?.entities?.[0]?.entity?.name || 'Unknown Issuer',
+      image_url: badge.issuer?.entities?.[0]?.entity?.vanity_url,
     },
     issued_at: badge.issued_at,
     expires_at: badge.expires_at,

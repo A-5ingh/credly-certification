@@ -1,6 +1,5 @@
 import { Card } from '@/components/ui/card'
 import type { CredlyBadge } from '@/lib/types'
-import { motion } from 'framer-motion'
 import { format } from 'date-fns'
 
 interface BadgeCardProps {
@@ -14,13 +13,8 @@ export function BadgeCard({ badge, onClick }: BadgeCardProps) {
     : 'Date unknown'
 
   return (
-    <motion.div
-      whileHover={{ y: -4, scale: 1.02 }}
-      whileTap={{ scale: 0.98 }}
-      transition={{ duration: 0.2 }}
-    >
       <Card 
-        className="overflow-hidden cursor-pointer border-border hover:border-accent hover:shadow-xl transition-all duration-200 h-full"
+        className="overflow-hidden cursor-pointer border-border hover:border-accent hover:shadow-xl hover:-translate-y-1 transition-transform duration-200 h-full"
         onClick={onClick}
       >
         <div className="p-6 flex flex-col items-center text-center gap-4 h-full">
@@ -28,6 +22,8 @@ export function BadgeCard({ badge, onClick }: BadgeCardProps) {
             <img 
               src={badge.image_url} 
               alt={badge.name}
+              loading="lazy"
+              decoding="async"
               className="w-full h-full object-contain"
             />
           </div>
@@ -44,6 +40,5 @@ export function BadgeCard({ badge, onClick }: BadgeCardProps) {
           </div>
         </div>
       </Card>
-    </motion.div>
   )
 }

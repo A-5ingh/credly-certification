@@ -1,5 +1,4 @@
 import { useState, useEffect, useMemo } from 'react'
-import { useKV } from '@github/spark/hooks'
 import { fetchCredlyBadges, extractUsernameFromUrl } from '@/lib/credly-api'
 import type { CredlyBadge } from '@/lib/types'
 import { ProfileSetup } from '@/components/ProfileSetup'
@@ -14,7 +13,7 @@ import { toast } from 'sonner'
 import { MagnifyingGlass, GearSix, Certificate, Sparkle } from '@phosphor-icons/react'
 
 function App() {
-  const [storedUsername, setStoredUsername] = useKV<string | null>('credly-username', null)
+  const [storedUsername, setStoredUsername] = useState<string | null>(null)
   const [badges, setBadges] = useState<CredlyBadge[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
@@ -28,6 +27,7 @@ function App() {
       const extractedUsername = extractUsernameFromUrl(username)
       const fetchedBadges = await fetchCredlyBadges(extractedUsername)
       setBadges(fetchedBadges)
+      localStorage.setItem('credlyUsername', extractedUsername)
       setStoredUsername(extractedUsername)
       
       if (fetchedBadges.length === 0) {
@@ -44,8 +44,9 @@ function App() {
   }
 
   useEffect(() => {
-    if (storedUsername) {
-      loadBadges(storedUsername)
+    const savedUsername = localStorage.getItem('credlyUsername')
+    if (savedUsername) {
+      setStoredUsername(savedUsername)
     }
   }, [])
 
@@ -56,6 +57,8 @@ function App() {
 
   const filteredBadges = useMemo(() => {
     return badges.filter(badge => {
+      if (!badge || !badge.issuer) return false
+      
       const matchesSearch = 
         badge.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         badge.issuer.name.toLowerCase().includes(searchQuery.toLowerCase())
@@ -72,6 +75,7 @@ function App() {
   }
 
   const handleChangeProfile = () => {
+    localStorage.removeItem('credlyUsername')
     setStoredUsername(null)
     setBadges([])
     setSearchQuery('')
