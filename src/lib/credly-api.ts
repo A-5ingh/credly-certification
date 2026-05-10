@@ -17,7 +17,7 @@ export async function fetchCredlyBadges(username: string): Promise<CredlyBadge[]
       throw new Error(`Proxy error: ${proxyResponse.status}`);
     }
     const proxyData = await proxyResponse.json();
-    response = JSON.parse(proxyData.contents);
+    response = proxyData;
   }
   else {
     response = await fetch(url);
